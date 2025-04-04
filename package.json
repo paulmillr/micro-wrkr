@@ -1,0 +1,64 @@
+{
+  "name": "micro-wrkr",
+  "version": "0.1.0",
+  "description": "Reasonable micro API for built-in Web Workers",
+  "files": [
+    "lib"
+  ],
+  "main": "./lib/index.js",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "bun": "./lib/esm/index.js",
+      "deno": "./lib/esm/index.js",
+      "node": {
+        "import": "./lib/esm/index-node.js",
+        "default": "./lib/index-node.js"
+      },
+      "import": "./lib/esm/index.js",
+      "default": "./lib/index.js"
+    },
+    "./utils": {
+      "types": "./lib/utils.d.ts",
+      "import": "./lib/esm/utils.js",
+      "default": "./lib/utils.js"
+    }
+  },
+  "devDependencies": {
+    "@paulmillr/jsbt": "0.3.3",
+    "micro-bmark": "0.4.0",
+    "micro-should": "0.5.1",
+    "prettier": "3.5.2",
+    "typescript": "5.8.2"
+  },
+  "sideEffects": false,
+  "author": "Paul Miller (https://paulmillr.com)",
+  "license": "MIT",
+  "homepage": "https://github.com/paulmillr/micro-wrkr",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulmillr/micro-wrkr.git"
+  },
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.cjs.json",
+    "build:release": "npx jsbt esbuild test/build",
+    "lint": "prettier --check src",
+    "format": "prettier --write src",
+    "test": "node test/index.js",
+    "test:bun1": "bun test/index.js",
+    "test:deno1": "deno --allow-env --allow-net test/index.js",
+    "test:all1": "cd build-tests/esm/ && npm run test:all"
+  },
+  "keywords": [
+    "worker",
+    "webworker",
+    "webworkers",
+    "threads",
+    "parallel",
+    "concurrent",
+    "cluster"
+  ],
+  "funding": "https://paulmillr.com/funding/"
+}
