@@ -50,7 +50,7 @@ export function initMSM() {
 
 ```ts
 import { bn254 } from '@noble/curves/bn254';
-import { initWorker } from 'micro-wrkr';
+import wrkr from 'micro-wrkr';
 import { type ProjConstructor, type ProjPointType } from '@noble/curves/abstract/weierstrass';
 
 type MSMInput<T> = { point: ProjPointType<T>; scalar: T };
@@ -70,7 +70,7 @@ const handlers = {
 };
 // Export Handlers type for type-safety
 export type Handlers = typeof handlers;
-initWorker(handlers);
+wrkr.initWorker(handlers);
 ```
 
 ## Why and how
