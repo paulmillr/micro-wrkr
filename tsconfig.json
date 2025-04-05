@@ -2,7 +2,7 @@
   "extends": "@paulmillr/jsbt/tsconfig.esm.json",
   "compilerOptions": {
     "lib": ["es2019", "dom"],
-    "outDir": "lib/esm"
+    "outDir": "lib"
   },
   "include": ["src"],
   "exclude": ["node_modules", "lib"]

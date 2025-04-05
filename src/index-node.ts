@@ -53,5 +53,3 @@ export const wrkr: WrkrAPI = initWrkr({
     };
   },
 });
-
-export default wrkr;

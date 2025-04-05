@@ -93,7 +93,6 @@ Then slow functions can be ran outside of main thread, with async API.
 ## Testing
 
 - Browserify isn't supported
-- Common.js may be supported, but isn't tested
 - Webpack sometimes breaks CSP by encoding workers as data:url
     - Example: `new Worker(new URL(e.p+e.u(44),e.b),{type:void 0})`
 
