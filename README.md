@@ -8,6 +8,8 @@ Wrappers for built-in Web Workers enabling easy parallel data processing.
 - 🏭 High-level type-safe helpers for batch processing
 - ⛓ Sync: much simpler than async, no queues / locks
 
+## Why
+
 Browser Web Workers work fine, but have terrible APIs (just like most "web APIs").
 Node.js doesn't have workers, while polyfilling them using node APIs breaks bundlers.
 
