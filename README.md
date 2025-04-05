@@ -1,12 +1,27 @@
 # micro-wrkr
 
-Reasonable micro API for built-in Web Workers.
+Wrappers for built-in Web Workers enabling easy parallel data processing.
 
-- Tested in browsers, node, deno, bun
-- Can be bundled using esbuild, rollup, webpack, parcel
-- CSP-friendly: no evals, static file name
-- High-level type-safe helpers: supports batch processing by default
-- Sync: much simpler than async, no queues / locks
+- 🔒 CSP-friendly: no evals, static file name
+- 🔍 Tested in browsers, node, deno, bun
+- 📦 Can be bundled using esbuild, rollup, webpack, parcel
+- 🏭 High-level type-safe helpers for batch processing
+- ⛓ Sync: much simpler than async, no queues / locks
+
+Browser Web Workers work fine, but have terrible APIs (just like most "web APIs").
+Node.js doesn't have workers, while polyfilling them using node APIs breaks bundlers.
+
+How could one pass a code to a worker?
+
+- eval: stringify function, then `eval`. Would break CSP and imports
+- wasm: much easier, just send binary blob of code. Would not work in envs without wasm
+- re-run module with if-workercode-else-maincode: fragile, need to track everything done before workers are initialized (IO such as HTTP, DOM)
+- build static file before publishing: works if wrkr is directly used, but not inside of other library
+
+Check out [webpack docs on webworkers](https://webpack.js.org/guides/web-workers/).
+
+The library could also be used in single-threaded manner: provide `threads` option to `initBatch`.
+Then slow functions can be ran outside of main thread, with async API.
 
 ## Usage
 
@@ -72,23 +87,6 @@ const handlers = {
 export type Handlers = typeof handlers;
 wrkr.initWorker(handlers);
 ```
-
-## Why and how
-
-Browser Web Workers work fine, but have terrible APIs (just like most "web APIs").
-Node.js has different interface, and polyfilling workers using node APIs breaks bundlers
-
-How could one pass a code to a worker?
-
-- eval: stringify function, then `eval`. Would break CSP and imports
-- wasm: much easier, just send binary blob of code. Would not work in envs without wasm
-- re-run module with if-workercode-else-maincode: fragile, need to track everything done before workers are initialized (IO such as HTTP, DOM)
-- build static file before publishing: works if wrkr is directly used, but not inside of other library
-
-Check out [webpack docs on webworkers](https://webpack.js.org/guides/web-workers/).
-
-The library could also be used in single-threaded manner: provide `threads` option to `initBatch`.
-Then slow functions can be ran outside of main thread, with async API.
 
 ## Testing
 

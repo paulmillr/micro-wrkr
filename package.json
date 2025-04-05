@@ -1,9 +1,10 @@
 {
   "name": "micro-wrkr",
   "version": "0.1.0",
-  "description": "Reasonable micro API for built-in Web Workers",
+  "description": "Wrappers for built-in Web Workers enabling easy parallel data processing",
   "files": [
-    "lib"
+    "lib",
+    "src"
   ],
   "type": "module",
   "main": "./lib/index.js",
