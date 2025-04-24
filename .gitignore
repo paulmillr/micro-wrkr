@@ -4,3 +4,4 @@ node_modules
 *.d.ts.map
 *.js.map
 /test/build
+/test/.parcel-cache

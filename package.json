@@ -48,10 +48,10 @@
     "build:release": "npx jsbt esbuild test/build",
     "lint": "prettier --check src",
     "format": "prettier --write src",
-    "test": "node test/index.js",
-    "test:bun1": "bun test/index.js",
-    "test:deno1": "deno --allow-env --allow-net test/index.js",
-    "test:all1": "cd build-tests && npm run test:all"
+    "test": "cd test; npm run build:install; node test-node.js",
+    "test:bun": "cd test; npm run build:install; bun test-node.js",
+    "test:deno": "cd test; npm run build:install; deno --allow-env --allow-net test-node.js",
+    "test:browser": "cd test && npm run test:full"
   },
   "keywords": [
     "worker",
