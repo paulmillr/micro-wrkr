@@ -37,7 +37,6 @@
   "scripts": {
     "build": "tsc",
     "build:clean": "rm *.{js,js.map,d.ts,d.ts.map} 2> /dev/null",
-    "lint": "prettier --check src",
     "format": "prettier --write src",
     "test": "cd test; npm run build:install; node test-node.js",
     "test:bun": "cd test; npm run build:install; bun test-node.js",
