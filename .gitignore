@@ -1,8 +1,8 @@
 node_modules
-/lib
-*.js
+*.tgz
+/*.js
+*.js.map
 *.d.ts
 *.d.ts.map
-*.js.map
 /test/build
-/test/.parcel-cache
+/test/compiled

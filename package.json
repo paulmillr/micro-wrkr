@@ -3,29 +3,28 @@
   "version": "0.1.0",
   "description": "Wrappers for built-in Web Workers enabling easy parallel data processing",
   "files": [
-    "lib",
+    "*.js",
+    "*.js.map",
+    "*.d.ts",
+    "*.d.ts.map",
     "src"
   ],
-  "type": "module",
-  "main": "./lib/index.js",
-  "module": "./lib/index.js",
-  "types": "./lib/index.d.ts",
   "exports": {
     ".": {
-      "types": "./lib/index.d.ts",
-      "bun": "./lib/index.js",
-      "deno": "./lib/index.js",
+      "types": "./index.d.ts",
+      "bun": "./index.js",
+      "deno": "./index.js",
       "node": {
-        "import": "./lib/index-node.js",
-        "default": "./lib/index-node.js"
+        "import": "./index-node.js",
+        "default": "./index-node.js"
       },
-      "import": "./lib/index.js",
-      "default": "./lib/index.js"
+      "import": "./index.js",
+      "default": "./index.js"
     },
     "./utils.js": {
-      "types": "./lib/utils.d.ts",
-      "import": "./lib/utils.js",
-      "default": "./lib/utils.js"
+      "types": "./utils.d.ts",
+      "import": "./utils.js",
+      "default": "./utils.js"
     }
   },
   "devDependencies": {
@@ -35,17 +34,9 @@
     "prettier": "3.6.2",
     "typescript": "5.9.2"
   },
-  "sideEffects": false,
-  "author": "Paul Miller (https://paulmillr.com)",
-  "license": "MIT",
-  "homepage": "https://github.com/paulmillr/micro-wrkr",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/paulmillr/micro-wrkr.git"
-  },
   "scripts": {
     "build": "tsc",
-    "build:release": "npx --no @paulmillr/jsbt esbuild test/build",
+    "build:clean": "rm *.{js,js.map,d.ts,d.ts.map} 2> /dev/null",
     "lint": "prettier --check src",
     "format": "prettier --write src",
     "test": "cd test; npm run build:install; node test-node.js",
@@ -62,5 +53,15 @@
     "concurrent",
     "cluster"
   ],
-  "funding": "https://paulmillr.com/funding/"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulmillr/micro-wrkr.git"
+  },
+  "type": "module",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": false,
+  "author": "Paul Miller (https://paulmillr.com)",
+  "license": "MIT"
 }
