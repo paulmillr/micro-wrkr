@@ -31,8 +31,6 @@ Then slow functions can be ran outside of main thread, with async API.
 
 > `deno add jsr:@paulmillr/micro-wrkr`
 
-> `deno doc jsr:@paulmillr/micro-wrkr` # command-line documentation
-
 ### Main file `main.js`
 
 ```ts
