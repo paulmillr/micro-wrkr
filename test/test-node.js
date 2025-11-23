@@ -1,4 +1,4 @@
-import { describe, should, it } from 'micro-should';
+import { describe, it, should } from '@paulmillr/jsbt/test.js';
 import { TESTS } from './test-shared.js';
 
 TESTS(describe, it);
