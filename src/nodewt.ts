@@ -22,6 +22,8 @@ export const wrkr: WrkrAPI = initWrkr({
       }
 
       const pp = threads.parentPort;
+      // The listener only exists inside a worker, but TS does not carry that narrowing into the callback.
+      if (!pp) throw new Error('expected parentPort in worker');
       if (res) {
         pp.postMessage({ id, res });
       } else {

@@ -34,9 +34,9 @@ Then slow functions can be ran outside of main thread, with async API.
 ### Main file `main.js`
 
 ```ts
-import { bn254 } from '@noble/curves/bn254';
-import { type ProjConstructor, type ProjPointType } from '@noble/curves/abstract/weierstrass';
-import wrkr from 'micro-wrkr';
+import { bn254 } from '@noble/curves/bn254.js';
+import { type ProjConstructor, type ProjPointType } from '@noble/curves/abstract/weierstrass.js';
+import { wrkr } from 'micro-wrkr';
 import { type Handlers } from './msm-worker.js';
 
 function reducePoint<T>(p: ProjConstructor<T>) {
@@ -64,9 +64,9 @@ export function initMSM() {
 ### Worker file `msm-worker.js`
 
 ```ts
-import { bn254 } from '@noble/curves/bn254';
-import wrkr from 'micro-wrkr';
-import { type ProjConstructor, type ProjPointType } from '@noble/curves/abstract/weierstrass';
+import { bn254 } from '@noble/curves/bn254.js';
+import { wrkr } from 'micro-wrkr';
+import { type ProjConstructor, type ProjPointType } from '@noble/curves/abstract/weierstrass.js';
 
 type MSMInput<T> = { point: ProjPointType<T>; scalar: T };
 

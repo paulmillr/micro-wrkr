@@ -1,5 +1,6 @@
 import { initWrkr, stringifyError, type WrkrAPI } from './utils.js';
 
+/** Default worker runtime wired to browser workers or the Node worker-thread adapter. */
 export const wrkr: WrkrAPI = initWrkr({
   cpus: (): number | undefined => {
     if (typeof navigator !== 'undefined' && navigator.hardwareConcurrency)
