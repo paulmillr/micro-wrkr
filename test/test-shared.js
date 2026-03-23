@@ -1,6 +1,7 @@
 import { bn254 } from '@noble/curves/bn254';
 import { sha256 } from '@noble/hashes/sha256';
 import { main } from './main.js';
+import { splitChunks } from '../utils.js';
 
 // Minimal assert version to avoid dependecies on node internals
 // Allows to verify that none of brwoserify version of node internals is included in resulting build
@@ -57,6 +58,21 @@ function deepStrictEqual(actual, expected, message) {
 
 export const TESTS = (describe, it) => {
   describe('workers', () => {
+    it('splitChunks validators', async () => {
+      const throwType = (fn, type) => {
+        let err;
+        try {
+          fn();
+        } catch (e) {
+          err = e;
+        }
+        deepStrictEqual(!!err, true);
+        deepStrictEqual(err instanceof type, true);
+      };
+      throwType(() => splitChunks([1, 2], '2'), TypeError);
+      throwType(() => splitChunks([1, 2], 0), RangeError);
+      throwType(() => splitChunks([1, 2], 1.5), RangeError);
+    });
     it(`basic`, async () => {
       const { methods, terminate } = await main();
 

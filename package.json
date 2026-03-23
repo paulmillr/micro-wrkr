@@ -28,9 +28,9 @@
     }
   },
   "devDependencies": {
-    "@paulmillr/jsbt": "0.4.5",
+    "@paulmillr/jsbt": "0.5.0",
     "prettier": "3.6.2",
-    "typescript": "5.9.2"
+    "typescript": "6.0.1-rc"
   },
   "scripts": {
     "build": "tsc",
@@ -39,7 +39,11 @@
     "test": "cd test; npm run build:install; node test-node.js",
     "test:bun": "cd test; npm run build:install; bun test-node.js",
     "test:deno": "cd test; npm run build:install; deno --allow-env --allow-net test-node.js",
-    "test:browser": "cd test && npm run test:full"
+    "test:browser": "cd test && npm run test:full",
+    "check": "npm run check:readme && npm run check:treeshake && npm run check:jsdoc",
+    "check:readme": "npx --no @paulmillr/jsbt readme package.json",
+    "check:treeshake": "npx --no @paulmillr/jsbt treeshake package.json test/build/out-treeshake",
+    "check:jsdoc": "npx --no @paulmillr/jsbt tsdoc package.json"
   },
   "keywords": [
     "worker",
