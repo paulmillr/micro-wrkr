@@ -35,24 +35,27 @@ Then slow functions can be ran outside of main thread, with async API.
 
 ```ts
 import { bn254 } from '@noble/curves/bn254.js';
-import { type ProjConstructor, type ProjPointType } from '@noble/curves/abstract/weierstrass.js';
+import type {
+  WeierstrassPointCons, WeierstrassPoint,
+} from '@noble/curves/abstract/weierstrass.js';
 import { wrkr } from 'micro-wrkr';
-import { type Handlers } from './msm-worker.js';
+import type { Methods } from 'micro-wrkr/utils.js';
+import type { Handlers } from './msm-worker.js';
 
-function reducePoint<T>(p: ProjConstructor<T>) {
-  return (lst: ProjPointType<T>[]) =>
-    lst.map((i) => new p(i.px, i.py, i.pz)).reduce((acc, i) => acc.add(i), p.ZERO);
+function reducePoint<T>(p: WeierstrassPointCons<T>) {
+  return (lst: WeierstrassPoint<T>[]): WeierstrassPoint<T> =>
+    lst.map((i) => new p(i.X, i.Y, i.Z)).reduce((acc, i) => acc.add(i), p.ZERO);
 }
 
-export function initMSM() {
+export function initMSM(): { methods: Methods<Handlers>; terminate: () => void } {
   // Type-safe
   // worker should be in same directory as main thread code
   const { methods, terminate } = wrkr.initBatch<Handlers>(
     () => new Worker(new URL('./msm-worker.js', import.meta.url), { type: 'module' }),
     {
       // optional reducers
-      bn254_msmG1: reducePoint(bn254.G1.ProjectivePoint),
-      bn254_msmG2: reducePoint(bn254.G2.ProjectivePoint),
+      bn254_msmG1: reducePoint(bn254.G1.Point),
+      bn254_msmG2: reducePoint(bn254.G2.Point),
     }
   );
   // Use `terminate` to stop workers when app is paused or exported from library.
@@ -65,26 +68,33 @@ export function initMSM() {
 
 ```ts
 import { bn254 } from '@noble/curves/bn254.js';
+import { pippenger } from '@noble/curves/abstract/curve.js';
 import { wrkr } from 'micro-wrkr';
-import { type ProjConstructor, type ProjPointType } from '@noble/curves/abstract/weierstrass.js';
+import type { Fp2 } from '@noble/curves/abstract/tower.js';
+import type {
+  WeierstrassPointCons,
+  WeierstrassPoint,
+} from '@noble/curves/abstract/weierstrass.js';
 
-type MSMInput<T> = { point: ProjPointType<T>; scalar: T };
+type MSMInput<T> = { point: WeierstrassPoint<T>; scalar: bigint };
+export type Handlers = {
+  bn254_msmG1: (lst: MSMInput<bigint>[]) => WeierstrassPoint<bigint>;
+  bn254_msmG2: (lst: MSMInput<Fp2>[]) => WeierstrassPoint<Fp2>;
+};
 
-function buildMSM<T>(point: ProjConstructor<T>) {
-  return (lst: MSMInput<T>[]): ProjPointType<T> => {
+function buildMSM<T>(point: WeierstrassPointCons<T>) {
+  return (lst: MSMInput<T>[]): WeierstrassPoint<T> => {
     if (!lst.length) return point.ZERO;
-    const points = lst.map((i: any) => new point(i.point.px, i.point.py, i.point.pz));
-    const scalars = lst.map((i: any) => i.scalar);
-    return point.msm(points, scalars);
+    const points = lst.map((i) => new point(i.point.X, i.point.Y, i.point.Z));
+    const scalars = lst.map((i) => i.scalar);
+    return pippenger(point, points, scalars);
   };
 }
 
-const handlers = {
-  bn254_msmG1: buildMSM(bn254.G1.ProjectivePoint),
-  bn254_msmG2: buildMSM(bn254.G2.ProjectivePoint),
+const handlers: Handlers = {
+  bn254_msmG1: buildMSM(bn254.G1.Point),
+  bn254_msmG2: buildMSM(bn254.G2.Point),
 };
-// Export Handlers type for type-safety
-export type Handlers = typeof handlers;
 wrkr.initWorker(handlers);
 ```
 

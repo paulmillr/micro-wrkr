@@ -1,6 +1,14 @@
 /** Worker call result envelope. */
 export type Result<T> = { res: T } | { err: string };
 
+const checkChunks = (numChunks: number, name = 'numChunks'): number => {
+  if (typeof numChunks !== 'number')
+    throw new TypeError(`expected ${name} number, got ${typeof numChunks}`);
+  if (!Number.isSafeInteger(numChunks) || numChunks <= 0)
+    throw new RangeError(`${name} must be > 0`);
+  return numChunks;
+};
+
 /**
  * Split a list into at most `numChunks` contiguous chunks.
  * @param list - Items to divide into worker batches.
@@ -15,10 +23,7 @@ export type Result<T> = { res: T } | { err: string };
  * ```
  */
 export function splitChunks<T>(list: T[], numChunks: number): T[][] {
-  if (typeof numChunks !== 'number')
-    throw new TypeError(`splitChunks: expected numChunks number, got ${typeof numChunks}`);
-  if (!Number.isSafeInteger(numChunks) || numChunks <= 0)
-    throw new RangeError('numChunks must be > 0');
+  numChunks = checkChunks(numChunks);
   const chunkSize = Math.ceil(list.length / numChunks);
   const res: T[][] = [];
   for (let i = 0; i < list.length; i += chunkSize) res.push(list.slice(i, i + chunkSize));
@@ -137,6 +142,8 @@ export type WrkrAPI = {
 
 const getConcurrencyFromPlatform = (platform: WorkerPlatform): number => {
   const cpus = platform.cpus();
+  // Custom platforms must return a positive worker count here.
+  // Only `undefined` opts into the 1-worker fallback.
   return cpus === undefined ? 1 : cpus;
 };
 
@@ -155,11 +162,14 @@ function initBatchGen<H extends WorkerHandlers>(
   const WAIT: Record<number, { resolve: (v: any) => void; reject: (e: any) => void }> = {};
 
   const errHandler = (err: any) => {
+    // Worker-level failures invalidate every in-flight call.
+    // Requests are already pinned to specific workers.
     for (const i in WAIT) WAIT[i].reject(err);
   };
   const msgHandler = (msg: any) => {
     const { id, res, err } = msg;
     const handler = WAIT[id];
+    // Drop the slot before settling so duplicate or late replies are surfaced as `unknown id`.
     delete WAIT[id];
     if (!handler) throw new Error('unknown id');
     if (err !== undefined) handler.reject(new Error(err));
@@ -173,7 +183,11 @@ function initBatchGen<H extends WorkerHandlers>(
   const methods = {} as any;
   for (const fn in reducers) {
     methods[fn] = async (input: any[], _threads?: number) => {
-      const chunks = splitChunks(input, _threads !== undefined ? _threads : threads);
+      const requested = checkChunks(_threads !== undefined ? _threads : threads, 'threads');
+      // Callers can cap a call below the pool size.
+      // Larger hints are limited to already-created workers.
+      const count = requested > workers.length ? workers.length : requested;
+      const chunks = splitChunks(input, count);
       const promises = chunks.map((chunk, i) => {
         const currId = id++;
         const thread = workers[i];
@@ -190,6 +204,8 @@ function initBatchGen<H extends WorkerHandlers>(
     };
   }
   const terminate = () => {
+    // Reject before stopping the pool.
+    // Pending callers cannot receive replies from stopped workers.
     errHandler(new Error('worker stopped'));
     for (const w of workers) w.terminate();
   };
@@ -215,6 +231,8 @@ function initBatchGen<H extends WorkerHandlers>(
 export function initWrkr(platform: WorkerPlatform): WrkrAPI {
   return {
     getConcurrency: () => getConcurrencyFromPlatform(platform),
+    // WorkerPlatform hooks are receiver-free function properties.
+    // Custom platforms should close over state instead of using `this`.
     initWorker: platform.initWorker,
     initBatch: (getWorker, reducers, threads) =>
       initBatchGen(platform, getWorker, reducers, threads),

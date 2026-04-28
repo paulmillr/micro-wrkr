@@ -56,22 +56,28 @@ function deepStrictEqual(actual, expected, message) {
   throw err;
 }
 
+async function throws(fn, type, message) {
+  let err;
+  try {
+    await fn();
+  } catch (e) {
+    err = e;
+  }
+  deepStrictEqual(!!err, true);
+  deepStrictEqual(err instanceof type, true);
+  if (message !== undefined) deepStrictEqual(err.message, message);
+}
+
 export const TESTS = (describe, it) => {
   describe('workers', () => {
     it('splitChunks validators', async () => {
-      const throwType = (fn, type) => {
-        let err;
-        try {
-          fn();
-        } catch (e) {
-          err = e;
-        }
-        deepStrictEqual(!!err, true);
-        deepStrictEqual(err instanceof type, true);
-      };
-      throwType(() => splitChunks([1, 2], '2'), TypeError);
-      throwType(() => splitChunks([1, 2], 0), RangeError);
-      throwType(() => splitChunks([1, 2], 1.5), RangeError);
+      await throws(
+        () => splitChunks([1, 2], '2'),
+        TypeError,
+        'expected numChunks number, got string'
+      );
+      await throws(() => splitChunks([1, 2], 0), RangeError, 'numChunks must be > 0');
+      await throws(() => splitChunks([1, 2], 1.5), RangeError, 'numChunks must be > 0');
     });
     it(`basic`, async () => {
       const { methods, terminate } = await main();
@@ -93,6 +99,33 @@ export const TESTS = (describe, it) => {
       deepStrictEqual(msm.equals(bn254.G1.ProjectivePoint.BASE.multiply(9n)), true);
 
       terminate();
+    });
+    it('falsy values', async () => {
+      const { methods, terminate } = await main();
+
+      try {
+        deepStrictEqual(await methods.zero([1]), [0]);
+        deepStrictEqual(await methods.no([1]), [false]);
+        deepStrictEqual(await methods.empty([1]), ['']);
+        deepStrictEqual(await methods.nothing([1]), [undefined]);
+        await throws(() => methods.throwUndefined([1]), Error, 'undefined');
+      } finally {
+        terminate();
+      }
+    });
+    it('thread override', async () => {
+      const { methods, terminate } = await main(2);
+
+      try {
+        deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6]), [2, 4, 6, 8, 10, 12]);
+        deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6], 1), [2, 4, 6, 8, 10, 12]);
+        deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6], 2), [2, 4, 6, 8, 10, 12]);
+        deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6], 4), [2, 4, 6, 8, 10, 12]);
+        await throws(() => methods.double([1, 2], '2'), TypeError, 'expected threads number, got string');
+        await throws(() => methods.double([1, 2], 0), RangeError, 'threads must be > 0');
+      } finally {
+        terminate();
+      }
     });
     it('throw', async () => {
       // console.log('123');
