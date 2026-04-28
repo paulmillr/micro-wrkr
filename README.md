@@ -8,6 +8,8 @@ Wrappers for built-in Web Workers enabling easy parallel data processing.
 - 🏭 High-level type-safe helpers for batch processing
 - ⛓ Sync: much simpler than async, no queues / locks
 
+Used in [micro-zk-proofs](https://github.com/paulmillr/micro-zk-proofs).
+
 ## Why
 
 Browser Web Workers work fine, but have terrible APIs (just like most "web APIs").
