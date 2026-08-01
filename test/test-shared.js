@@ -113,6 +113,56 @@ export const TESTS = (describe, it) => {
         terminate();
       }
     });
+    it('input must be array', async () => {
+      const { methods, terminate } = await main();
+      try {
+        await throws(() => methods.double(5), TypeError, 'expected list array, got number');
+      } finally {
+        terminate();
+      }
+    });
+    it('threads validated at init', async () => {
+      await throws(() => main(0), RangeError, 'threads must be > 0');
+      await throws(() => main(1.5), RangeError, 'threads must be > 0');
+      await throws(() => main('2'), TypeError, 'expected threads number, got string');
+      await throws(() => main({ threads: 0 }), RangeError, 'threads must be > 0');
+      await throws(() => main({ chunksPerWorker: 0 }), RangeError, 'chunksPerWorker must be > 0');
+    });
+    it('chunksPerWorker option', async () => {
+      const { methods, terminate } = await main({ threads: 2, chunksPerWorker: 1 });
+      try {
+        deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6]), [2, 4, 6, 8, 10, 12]);
+        deepStrictEqual(await methods.sum([1, 2, 3, 4, 5]), 15);
+      } finally {
+        terminate();
+      }
+    });
+    it('transferables', async () => {
+      const { methods, terminate } = await main({
+        threads: 2,
+        transfer: { hash: (chunk) => chunk.map((u8) => u8.buffer) },
+      });
+      try {
+        const a = new Uint8Array([1, 2, 3]);
+        const b = new Uint8Array([4, 5, 6]);
+        deepStrictEqual(await methods.hash([a, b]), [
+          sha256(new Uint8Array([1, 2, 3])),
+          sha256(new Uint8Array([4, 5, 6])),
+        ]);
+        // Input buffers were moved to workers, not cloned: detached in the caller.
+        deepStrictEqual(a.byteLength, 0);
+        deepStrictEqual(b.byteLength, 0);
+      } finally {
+        terminate();
+      }
+    });
+    it('calls after terminate reject', async () => {
+      const { methods, terminate } = await main();
+      deepStrictEqual(await methods.double([1, 2]), [2, 4]);
+      terminate();
+      terminate(); // idempotent
+      await throws(() => methods.double([3, 4]), Error, 'worker: terminated');
+    });
     it('thread override', async () => {
       const { methods, terminate } = await main(2);
 
@@ -121,7 +171,11 @@ export const TESTS = (describe, it) => {
         deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6], 1), [2, 4, 6, 8, 10, 12]);
         deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6], 2), [2, 4, 6, 8, 10, 12]);
         deepStrictEqual(await methods.double([1, 2, 3, 4, 5, 6], 4), [2, 4, 6, 8, 10, 12]);
-        await throws(() => methods.double([1, 2], '2'), TypeError, 'expected threads number, got string');
+        await throws(
+          () => methods.double([1, 2], '2'),
+          TypeError,
+          'expected threads number, got string'
+        );
         await throws(() => methods.double([1, 2], 0), RangeError, 'threads must be > 0');
       } finally {
         terminate();

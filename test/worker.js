@@ -22,4 +22,5 @@ const handlers = {
   },
 };
 
-wrkr.initWorker(handlers);
+// Second arg: hash results are moved back zero-copy instead of cloned.
+wrkr.initWorker(handlers, { hash: (res) => res.map((u8) => u8.buffer) });

@@ -100,6 +100,49 @@ const handlers: Handlers = {
 wrkr.initWorker(handlers);
 ```
 
+### Options
+
+Third argument of `initBatch` accepts a thread count or an options object:
+
+```ts
+const { methods, terminate } = wrkr.initBatch(getWorker, reducers, {
+  // Worker pool size. Default: hardwareConcurrency / cpu count.
+  // Workers spawn lazily, on first use.
+  threads: 4,
+  // Chunks created per worker used by a call. Values above 1 let fast workers
+  // pull extra chunks instead of idling while the slowest chunk finishes.
+  // Set to 1 to send exactly one chunk per worker. Default: 4.
+  chunksPerWorker: 4,
+  // Zero-copy: per-method hooks listing Transferables inside an input chunk.
+  // Transferred buffers are detached and unusable in the caller!
+  transfer: { hash: (chunk) => chunk.map((u8) => u8.buffer) },
+});
+```
+
+Inside the worker file, second argument of `initWorker` transfers result buffers back:
+
+```ts
+wrkr.initWorker(handlers, { hash: (res) => res.map((u8) => u8.buffer) });
+```
+
+#### Why transfer is opt-in
+
+Transferables are supported by every runtime the library runs on, but they are not a
+transparent optimization: transferring a buffer *detaches* it on the sending side.
+The library cannot turn them on by default, because only the caller knows whether that is safe:
+
+- Callers often keep their input. `await methods.hash(data); await methods.hash(data)` —
+  auto-transfer would make the second call silently operate on zero-length buffers.
+- Aliasing breaks even single calls. Several `Uint8Array`s may share one `ArrayBuffer`
+  (e.g. subarrays of a big allocation) and land in different chunks: transferring chunk 1's
+  buffer detaches chunk 2's data before it is sent.
+- Auto-discovery is not free: it would require deep-walking every payload in JS, paid even
+  by callers that gain nothing from it.
+
+The `transfer` hook is the caller's explicit assertion: "I'm done with these buffers".
+For zero-copy *without* giving up ownership, use `SharedArrayBuffer` payloads instead —
+they are cloned as references — but browsers require COOP/COEP headers to enable them.
+
 ## Testing
 
 - Browserify isn't supported

@@ -2,7 +2,7 @@
 import * as threads from 'node:worker_threads';
 // @ts-ignore
 import { cpus } from 'node:os';
-import { initWrkr, stringifyError, type WrkrAPI } from './utils.js';
+import { initWrkr, stringifyError, type WorkerTransfer, type WrkrAPI } from './utils.js';
 
 // IMPORTANT
 // `export` fields order in package.json matters for bun.
@@ -12,7 +12,7 @@ import { initWrkr, stringifyError, type WrkrAPI } from './utils.js';
 export const wrkr: WrkrAPI = Object.freeze(
   initWrkr({
     cpus: () => cpus().length,
-    initWorker(handlers: Record<string, Function>): void {
+    initWorker(handlers: Record<string, Function>, transfer?: WorkerTransfer): void {
       threads.parentPort?.on('message', (msg: any) => {
         const { id, fn, payload } = msg;
         const pp = threads.parentPort;
@@ -20,35 +20,46 @@ export const wrkr: WrkrAPI = Object.freeze(
         // TS does not carry that narrowing into the callback.
         if (!pp) throw new Error('expected parentPort in worker');
         try {
+          // Own-property check: inherited names like 'toString' are not methods.
+          if (!Object.hasOwn(handlers, fn) || typeof handlers[fn] !== 'function')
+            throw new Error('unknown method: ' + fn);
           // Success is control-flow based because handlers may return falsy values.
           const res = handlers[fn](payload);
-          pp.postMessage({ id, res });
+          const t = transfer && Object.hasOwn(transfer, fn) ? transfer[fn](res) : undefined;
+          pp.postMessage({ id, res }, t as any);
         } catch (e) {
           pp.postMessage({ id, err: stringifyError(e) });
         }
       });
     },
     createWorker(getWorker, onMessage, onError) {
-      if (typeof Worker !== 'undefined') throw new Error('Worker defined on node');
       // getWorker calls new Worker(...) inside, but we cannot define it as isomorphic thing, because
       // then bundlers may catch it and break.
-      // Instead, we temporary set global Worker object, run function and then remove it.
-      let worker: threads.Worker = undefined as any;
+      // Instead, we temporarily set global Worker object, run function and then restore it.
+      let worker: threads.Worker | undefined;
+      const prevWorker = (globalThis as any).Worker;
       globalThis.Worker = class {
-        constructor(fileUrl: string | URL) {
+        constructor(fileUrl: string | URL, _opts?: unknown) {
+          // Web Worker options ({ type: 'module' }) don't map to node:worker_threads options.
           worker = new threads.Worker(fileUrl);
         }
       } as unknown as typeof Worker;
       try {
         getWorker() as unknown as threads.Worker;
       } finally {
-        delete (globalThis as any).Worker;
+        if (prevWorker === undefined) delete (globalThis as any).Worker;
+        else (globalThis as any).Worker = prevWorker;
       }
-      worker.on('message', onMessage);
-      worker.on('error', (err: Error) => onError(err.message));
+      if (!worker) throw new Error('getWorker must construct a worker via new Worker(...)');
+      const w = worker;
+      w.on('message', onMessage);
+      w.on('error', (err: Error) => onError(stringifyError(err)));
+      // Without this, a worker that dies (e.g. process.exit) leaves callers hanging forever.
+      // After a normal terminate() no calls are pending, so the rejection is a no-op.
+      w.on('exit', (code: number) => onError('worker exited with code ' + code));
       return {
-        send: (msg: any) => worker.postMessage(msg),
-        terminate: () => worker.terminate(),
+        send: (msg: any, transfer?: Transferable[]) => w.postMessage(msg, transfer as any),
+        terminate: () => w.terminate(),
       };
     },
   })
