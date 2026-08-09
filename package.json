@@ -4,9 +4,7 @@
   "description": "Wrappers for built-in Web Workers enabling easy parallel data processing",
   "files": [
     "*.js",
-    "*.js.map",
     "*.d.ts",
-    "*.d.ts.map",
     "src"
   ],
   "exports": {
@@ -28,20 +26,20 @@
     }
   },
   "devDependencies": {
-    "@paulmillr/jsbt": "0.6.0",
+    "@paulmillr/jsbt": "0.6.5",
     "prettier": "3.6.2",
     "typescript": "6.0.2"
   },
   "scripts": {
+    "benchmark:size": "npx bismar@0.1 -bs",
     "build": "tsc",
-    "bundle": "npx --no @paulmillr/jsbt bundle",
-    "build:clean": "rm *.{js,js.map,d.ts,d.ts.map} 2> /dev/null",
+    "build:clean": "rm *.{js,d.ts} 2> /dev/null",
+    "check": "jsbt-check",
     "format": "prettier --write src",
     "test": "cd test; npm run build:install; node test-node.js",
     "test:bun": "cd test; npm run build:install; bun test-node.js",
     "test:deno": "cd test; npm run build:install; deno --allow-env --allow-net test-node.js",
-    "test:browser": "cd test && npm run test:full",
-    "check": "npx --no @paulmillr/jsbt check"
+    "test:browser": "cd test && npm run test:full"
   },
   "keywords": [
     "worker",
