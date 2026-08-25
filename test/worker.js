@@ -1,5 +1,6 @@
-import { bn254 } from '@noble/curves/bn254';
-import { sha256 } from '@noble/hashes/sha2';
+import { bn254 } from '@noble/curves/bn254.js';
+import { pippenger } from '@noble/curves/abstract/curve.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { wrkr } from 'micro-wrkr';
 
 const handlers = {
@@ -13,12 +14,15 @@ const handlers = {
   throwUndefined: () => {
     throw undefined;
   },
+  throwError: () => {
+    throw new Error('boom');
+  },
   hash: (i) => i.map((j) => sha256(j)),
   bn254_msmG1: (lst) => {
-    if (!lst.length) return bn254.G1.ProjectivePoint.ZERO;
-    const points = lst.map((i) => new bn254.G1.ProjectivePoint(i.point.px, i.point.py, i.point.pz));
+    if (!lst.length) return bn254.G1.Point.ZERO;
+    const points = lst.map((i) => new bn254.G1.Point(i.point.X, i.point.Y, i.point.Z));
     const scalars = lst.map((i) => i.scalar);
-    return bn254.G1.ProjectivePoint.msm(points, scalars);
+    return pippenger(bn254.G1.Point, points, scalars);
   },
 };
 

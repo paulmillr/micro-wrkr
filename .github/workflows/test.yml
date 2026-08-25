@@ -1,0 +1,31 @@
+name: Run tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    name: jsbt v0.7.0
+    uses: paulmillr/jsbt/.github/workflows/test.yml@78e04b481416536e0d4369a3c9f718be306491f8
+  browser:
+    name: Browser / Playwright
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            test/package-lock.json
+      - run: npm ci
+      - run: npm run test:setup
+      - run: npm --prefix test run playwright:install -- --with-deps
+      - run: npm run test:browsers:run

@@ -1,0 +1,11 @@
+{
+  "extends": "@paulmillr/jsbt/tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "isolatedDeclarations": false,
+    "noEmit": false,
+    "outDir": "compiled",
+    "rootDir": ".."
+  },
+  "include": ["../src", "index.ts", "types.ts", "worker.ts"]
+}

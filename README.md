@@ -106,11 +106,25 @@ wrkr.initWorker(handlers);
 - Webpack sometimes breaks CSP by encoding workers as data:url
     - Example: `new Worker(new URL(e.p+e.u(44),e.b),{type:void 0})`
 
-
 ```sh
-# when no google chrome, thorium can also be used
-export CHROME_BIN='/Applications/Thorium.app/Contents/MacOS/Thorium'
-npm run build && npm run test:full
+# one-time browser setup (Playwright uses version-matched browser builds)
+npm --prefix test run playwright:install
+
+# deterministic unit, Node worker, and type-level consumer tests
+npm test
+
+# optional runtime suites
+npm run test:bun
+npm run test:deno
+
+# strict-CSP Firefox tests for Parcel, webpack, Rollup, and esbuild
+npm run test:browser
+
+# the same browser suite in Chromium
+npm run test:chromium
+
+# everything above with one shared setup
+npm run test:all
 ```
 
 ## License

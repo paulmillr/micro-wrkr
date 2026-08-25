@@ -6,3 +6,6 @@ node_modules
 *.d.ts.map
 /test/build
 /test/compiled
+/test/.parcel-cache
+/test/playwright-report
+/test/test-results

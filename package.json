@@ -4,9 +4,7 @@
   "description": "Wrappers for built-in Web Workers enabling easy parallel data processing",
   "files": [
     "*.js",
-    "*.js.map",
     "*.d.ts",
-    "*.d.ts.map",
     "src"
   ],
   "exports": {
@@ -28,23 +26,33 @@
     }
   },
   "devDependencies": {
-    "@paulmillr/jsbt": "0.5.0",
-    "prettier": "3.6.2",
-    "typescript": "6.0.2"
+    "@paulmillr/jsbt": "0.7.1",
+    "bismar": "0.1.8",
+    "prettier": "3.9.6",
+    "typescript": "7.0.2"
   },
   "scripts": {
+    "benchmark:size": "bismar -bsm",
     "build": "tsc",
-    "build:release": "npx --no @paulmillr/jsbt esbuild test/build",
-    "build:clean": "rm *.{js,js.map,d.ts,d.ts.map} 2> /dev/null",
+    "build:clean": "rm *.{js,d.ts} 2> /dev/null",
+    "check": "jsbt-check",
     "format": "prettier --write src",
-    "test": "cd test; npm run build:install; node test-node.js",
-    "test:bun": "cd test; npm run build:install; bun test-node.js",
-    "test:deno": "cd test; npm run build:install; deno --allow-env --allow-net test-node.js",
-    "test:browser": "cd test && npm run test:full",
-    "check": "npx --no @paulmillr/jsbt check package.json",
-    "check:readme": "npx --no @paulmillr/jsbt readme package.json",
-    "check:treeshake": "npx --no @paulmillr/jsbt treeshake package.json test/build/out-treeshake",
-    "check:jsdoc": "npx --no @paulmillr/jsbt tsdoc package.json"
+    "test:setup": "npm run build && npm ci --prefix test --install-links",
+    "test:unit": "node test/test-unit.js",
+    "test:node": "node test/test-node.js",
+    "test:types": "tsc -p test/tsconfig.json",
+    "test:tsc": "npm run test:setup && npm run test:types && node test/compiled/test/index.js",
+    "test": "npm run test:setup && npm run test:unit && npm run test:node && npm run test:types",
+    "test:bun:run": "bun test/test-unit.js && bun test/test-node.js",
+    "test:bun": "npm run test:setup && npm run test:bun:run",
+    "test:deno:run": "deno --allow-env --allow-read test/test-unit.js && deno --allow-env --allow-read test/test-node.js",
+    "test:deno": "npm run test:setup && npm run test:deno:run",
+    "test:browser:run": "npm --prefix test run test:browser",
+    "test:browser": "npm run test:setup && npm run test:browser:run",
+    "test:chromium:run": "npm --prefix test run test:chromium",
+    "test:chromium": "npm run test:setup && npm run test:chromium:run",
+    "test:browsers:run": "npm --prefix test run test:browsers",
+    "test:all": "npm run test:setup && npm run test:unit && npm run test:node && npm run test:types && npm run test:bun:run && npm run test:deno:run && npm run test:browsers:run"
   },
   "keywords": [
     "worker",
